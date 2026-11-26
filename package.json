@@ -1,11 +1,29 @@
 {
   "name": "canghai",
   "version": "0.1.0",
-  "description": "藏海 · canghai —— 二次元知识图鉴引擎 + 控制面板。可接入 QQAgent / DSH 两个宿主，支持可插拔外部数据源，本地秒查、离线可用、定时保鲜。与记忆系统职责正交：藏海查「是什么」，记忆管「发生过什么」。",
+  "description": "藏海 · canghai —— 二次元知识图鉴引擎 + 控制面板。可接入 QQAgent 与 DSH 两个宿主，支持可插拔外部数据源，本地秒查、离线可用、定时保鲜。与记忆系统职责正交：藏海查「是什么」，记忆管「发生过什么」。",
   "type": "module",
   "license": "MIT",
+  "main": "./adapters/dsh/index.js",
   "bin": { "canghai": "./cli.js" },
-  "main": "./index.js",
+  "files": [
+    "adapters",
+    "core",
+    "panel",
+    "data/seed",
+    "index.js",
+    "cli.js",
+    "server.js",
+    "sources.config.json",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "scripts": {
     "sync": "node cli.js sync",
     "search": "node cli.js search",
@@ -13,8 +31,8 @@
     "serve": "node server.js",
     "test": "node --test"
   },
-  "engines": { "node": ">=20" },
-  "keywords": ["knowledge-base", "anime", "games", "qqbot", "cordis", "qqagent", "dsh", "plugin", "dictionary"],
+  "engines": { "node": ">=22" },
+  "keywords": ["knowledge-base", "anime", "games", "qqbot", "cordis", "qqagent", "dsh", "dsh-plugin", "dictionary"],
   "author": "",
   "repository": { "type": "git", "url": "" },
   "dependencies": {}

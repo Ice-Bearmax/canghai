@@ -1,23 +1,23 @@
 // 藏海 · DSH (Cordis) 适配器
 //
-// 部署：DSH 的插件走 Cordis。把 canghai 目录作为插件放入，并在 DSH_HOME/profiles/<profile>/
-// cordis.patch.yml 里加一条：
+// 安装（推荐）：
+//   dsh plugin --profile desktop add github:<owner>/canghai
+// 或手动：把本仓库作为插件放入，在 $DSH_HOME/profiles/<profile>/cordis.patch.yml 追加：
 //   - insert:
 //       - id: canghai
 //         name: canghai
-// 然后重载插件。入口即本文件（Cordis 约定 export apply(ctx)）。
 //
-// 与 QQAgent 版共用同一个 core（../../index.js）—— 两版只是「接线方式」不同，
-// 检索/数据源/存储逻辑完全一致。这就是「做两版」的正确姿势：一份内核，两个壳。
+// 与 QQAgent 版共用同一个 core（./core）。两版只是「接线方式」不同。
+//
+// 开箱即用：首次启动若本地库为空，自动灌入 data/seed（不联网、毫秒级），
+// 随后可选在后台跑一次全量同步（需联网，失败不影响已可用的种子库）。
 
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, '..', '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 export const name = 'canghai';
-// 只注入用得到的服务；缺失也能跑（工具不注册但引擎可用）。
 export const inject = ['tools'];
 
 export async function apply(ctx) {
@@ -32,7 +32,7 @@ export async function apply(ctx) {
 
   const limit = Number(process.env.CANGHAI_LOOKUP_LIMIT) || 3;
 
-  // 注册查词工具给 DSH 的 agent。描述写死与记忆的分工边界。
+  // ── 注册工具（写死与记忆的分工边界）────────────────────────────
   const register = ctx.tools?.register;
   if (typeof register === 'function') {
     register({
@@ -52,22 +52,43 @@ export async function apply(ctx) {
         return { text: r.text };
       }
     });
-    // 同步工具（可选，让 agent 也能触发更新）
+
     register({
       name: 'canghai_sync',
       description: '从外部数据源拉取最新知识更新本地图鉴（联网、耗时；一般由定时任务跑，主人要求手动更新时才调）。',
-      parameters: { type: 'object', properties: { only: { type: 'string', description: '只同步某源 id，逗号分隔；留空=全部' } } },
+      parameters: {
+        type: 'object',
+        properties: { only: { type: 'string', description: '只同步某源 id，逗号分隔；留空=全部' } }
+      },
       async execute(args) {
         const rep = await engine.sync({ only: args?.only ? String(args.only).split(',') : null });
-        return { text: `同步完成：入库 ${rep.total} 条，成功 ${rep.okCount}/${rep.sources.length} 源。` +
-          rep.sources.map((s) => `\n- ${s.label}: ${s.ok ? s.count + '条' : (s.error || '跳过')}`).join('') };
+        return {
+          text: `同步完成：入库 ${rep.total} 条，成功 ${rep.okCount}/${rep.sources.length} 源。` +
+            rep.sources.map((s) => `\n- ${s.label}: ${s.ok ? s.count + ' 条' : (s.error || '跳过')}`).join('')
+        };
       }
     });
   }
 
-  // 生命周期：DSH 卸载插件时清资源（此处引擎无长驻资源，占位防止内存泄漏告警）。
+  // ── 首次启动：库空则灌种子（不联网），再后台尝试全量同步 ──────────
+  (async () => {
+    try {
+      if (engine.stats().total === 0) {
+        await engine.sync({ only: ['seed'] });
+        ctx.logger?.info?.('canghai', `首次初始化：已灌入种子库 ${engine.stats().total} 条`);
+      }
+      // 后台增量（失败无声，保留已有库）。CANGHAI_NO_BG_SYNC=1 可关（纯离线/测试）。
+      if (process.env.CANGHAI_NO_BG_SYNC === '1') return;
+      engine.sync()
+        .then((rep) => ctx.logger?.info?.('canghai', `后台同步：入库 ${rep.total} 条，成功 ${rep.okCount}/${rep.sources.length} 源`))
+        .catch((e) => ctx.logger?.warn?.('canghai', `后台同步失败（不影响查已有库）：${e.message}`));
+    } catch (e) {
+      ctx.logger?.warn?.('canghai', `初始化异常（不影响进程）：${e.message}`);
+    }
+  })();
+
   if (typeof ctx.effect === 'function') {
-    ctx.effect(() => () => { /* dispose */ });
+    ctx.effect(() => () => { /* dispose：引擎无长驻资源 */ });
   }
 
   ctx.logger?.info?.('canghai', `就绪：库内 ${engine.stats().total} 条`);

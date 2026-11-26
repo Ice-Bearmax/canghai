@@ -1,0 +1,8 @@
+- insert:
+    - id: canghai
+      name: canghai
+      # 藏海 · 知识图鉴（DSH/Cordis 插件）
+      # 配置可直接在此追加，例如：
+      #   config:
+      #     dataDir: '/path/to/canghai-data'
+      #     lookupLimit: 3

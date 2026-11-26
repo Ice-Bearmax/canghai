@@ -98,19 +98,27 @@ node server.js            # 起控制面板 → http://127.0.0.1:8792
 
 **对接点**：`setup(api)` → `api.registerTool({id:'lookup', ...})`；可选 `api.registerCapability('knowledge.canghai')` 供其它插件软依赖。
 
-### 4.2 DSH 版
+### 4.2 DSH 版（可一键安装）
 
-1. 把 `canghai/` 作为插件放入 DSH 可加载位置，在 `DSH_HOME/profiles/<profile>/cordis.patch.yml` 追加：
+本仓库根 `package.json` 本身就是 DSH 插件包（`main` → `adapters/dsh/index.js`，`dsh.bundle.patch` → `cordis.patch.yml`），所以**整仓即可作为插件安装**：
 
-   ```yaml
-   - insert:
-       - id: canghai
-         name: canghai
-   ```
-2. 重载插件。注册工具 `canghai_lookup`、`canghai_sync`。
-3. 环境变量：`CANGHAI_DATA_DIR`、`CANGHAI_LOOKUP_LIMIT`。
+```bash
+# 桌面版
+dsh plugin --profile desktop add github:<owner>/canghai
+# Web 版
+dsh plugin --profile web add github:<owner>/canghai
+```
 
-**对接点**：Cordis 的 `export const inject=['tools']; export function apply(ctx){...}` → `ctx.tools.register({name, description, parameters, execute})`，`ctx.effect` 管生命周期。
+装完重启 DSH。插件会自动：
+
+1. 首次启动若本地库为空 → **从包内 `data/seed` 灌入种子**（不联网、毫秒级，装完即可查）；
+2. 随后后台跑一次全量同步（联网，失败不影响已可用的种子库）。
+
+注册工具：`canghai_lookup`（查词）、`canghai_sync`（手动更新）。
+
+环境变量：`CANGHAI_DATA_DIR`（数据目录）、`CANGHAI_LOOKUP_LIMIT`（返回条数）、`CANGHAI_NO_BG_SYNC=1`（关闭后台同步，纯离线）。
+
+**与 QQ 机器人联动**：配合 [`dsh-qq-bot`](https://github.com/arrow1031-dev/dsh-qq-bot)（每个 QQ 会话一个 DSH Agent），藏海的 `canghai_lookup` 与它注册的工具同在一张全局工具表，群友提问时 agent 可直接调用，**无需改一行代码**。注意：QQ 访客若受工具白名单限制，需在 `dsh-qq-bot` 侧放行该工具；且同一 QQ 号不要同时连两个机器人（详见该插件 README）。
 
 > 两版**共用同一个 `core/`**，只是接线方式不同。这就是「做两版」而不用维护两套逻辑。
 

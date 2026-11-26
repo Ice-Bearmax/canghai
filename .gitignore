@@ -15,3 +15,4 @@ data/cache/
 
 # 本地覆盖配置
 sources.local.json
+.tmp-test/

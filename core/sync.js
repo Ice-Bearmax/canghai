@@ -131,6 +131,7 @@ function makeCtx(deps, src, config, log) {
   return {
     config,
     dataDir: deps.dataDir,
+    pkgRoot: deps.projectDir,
     log: (m) => log(`  · ${src.id}: ${m}`),
     now: Date.now,
     // 统一带 UA + 超时的 fetch；json:true 直接返回解析后的对象。

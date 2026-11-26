@@ -16,10 +16,19 @@ export default {
   },
 
   async fetch(ctx) {
-    const dir = path.resolve(ctx.dataDir, ctx.config.dir || 'seed');
-    if (!fs.existsSync(dir)) {
+    // 种子库随包发布（<pkg>/data/seed），而 dataDir 可能是用户自定的。
+    // 所以优先在包内找；找不到再回落到用户 dataDir 下的同名目录。
+    const rel = ctx.config.dir || 'seed';
+    const candidates = [
+      ctx.pkgRoot ? path.resolve(ctx.pkgRoot, 'data', rel) : null,
+      path.resolve(ctx.dataDir, rel)
+    ].filter(Boolean);
+    const dir = candidates.find((d) => {
+      try { return fs.existsSync(d) && fs.statSync(d).isDirectory(); } catch { return false; }
+    });
+    if (!dir) {
       // 目录不存在不算错误，返回空，让 sync 跳过（首次 clone 后没种子是正常的）。
-      ctx.log(`本地目录不存在，跳过：${dir}`);
+      ctx.log(`本地目录不存在，跳过：${candidates.join(' | ')}`);
       return [];
     }
     const files = fs.readdirSync(dir).filter((n) => n.endsWith('.json'));
