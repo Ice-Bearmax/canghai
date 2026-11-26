@@ -22,7 +22,8 @@ export const ENTRY_SCHEMA = {
   // 选填：出处（作品名/游戏名/事件）。
   era: { type: 'string', max: 120 },
   // 选填：新鲜度标签，面板可按此过滤。
-  freshness: { type: 'string', enum: ['常用', '偏旧', '正热', ''], max: 8 },
+  // 「自学习」= 机器人运行时自己收录的（见 store.rememberEntry）。
+  freshness: { type: 'string', enum: ['常用', '偏旧', '正热', '自学习', ''], max: 8 },
   // 选填：分类标签，面板侧边栏与过滤用。
   tags: { type: 'array', items: 'string', max: 12 }
 };

@@ -15,7 +15,16 @@ const PANEL = path.join(HERE, 'panel');
 const PORT = Number(process.env.CANGHAI_PORT || 8792);
 const HOST = process.env.CANGHAI_HOST || '127.0.0.1';
 
-const engine = createEngine({ log: (...a) => console.log('[canghai]', ...a) });
+const engine = createEngine({
+  // 支持 --data=路径 或 CANGHAI_DATA_DIR，否则用包内 data/
+  dataDir: argData() || process.env.CANGHAI_DATA_DIR || undefined,
+  log: (...a) => console.log('[canghai]', ...a)
+});
+
+function argData() {
+  const a = process.argv.find((x) => x.startsWith('--data='));
+  return a ? a.slice('--data='.length) : '';
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
