@@ -1,0 +1,25 @@
+{
+  "id": "canghai",
+  "name": "藏海 · 知识图鉴",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "category": "knowledge",
+  "description": "本地二次元知识图鉴。聊到梗、角色、作品名而吃不准时，先查藏海（本地秒查、不联网）再答，别硬猜。收录动漫/游戏/影视的名场面、角色设定、网络新梗；支持从 GitHub 上的百科数据集定时同步保鲜。与记忆系统分工：藏海答「是什么」，记忆答「聊过没有」。",
+  "author": "canghai",
+  "entry": "index.js",
+  "permissions": [],
+  "enabledByDefault": true,
+  "capabilities": ["knowledge.canghai"],
+  "requires": [],
+  "settings": {
+    "dataDir": {
+      "type": "string",
+      "default": "",
+      "label": "数据目录",
+      "hint": "留空 = 用 QQAgent data 下的 canghai/。藏海绝不写入记忆系统目录。"
+    },
+    "lookupLimit": { "type": "number", "default": 3, "label": "查词最多返回条数" },
+    "panelPort": { "type": "number", "default": 8792, "label": "面板端口", "hint": "本机 127.0.0.1 控制面板" },
+    "autoSync": { "type": "boolean", "default": false, "label": "启动时自动同步", "hint": "开则应用启动后台拉一次数据源（需联网）" }
+  }
+}

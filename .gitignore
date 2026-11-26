@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+.DS_Store
+
+# 运行库：由 sync 从 data/seed + 数据源重建，不入库（种子库 data/seed/ 保留）
+data/kb/
+data/state/
+data/cache/
+
+# 但保留示例种子库与配置，方便 clone 后直接跑
+!data/kb/seed/
+
+# 本地覆盖配置
+sources.local.json

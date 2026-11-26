@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藏海 · 知识图鉴</title>
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">🐋</span>
+      <div>
+        <div class="name">藏海</div>
+        <div class="sub">CANGHAI</div>
+      </div>
+    </div>
+    <button class="nav-btn active" data-page="overview"><span class="ico">🌊</span>概览</button>
+    <button class="nav-btn" data-page="search"><span class="ico">🔍</span>检索</button>
+    <button class="nav-btn" data-page="sources"><span class="ico">📚</span>数据源</button>
+    <button class="nav-btn" data-page="sync"><span class="ico">🔄</span>同步</button>
+    <div style="margin-top:auto;color:var(--ink-faint);font-size:11px;padding:6px">
+      藏海 · v0.1<br>本地秒查 · 离线可用
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- 概览 -->
+    <section class="page" id="page-overview">
+      <h1 class="page-title">藏海 · 知识图鉴</h1>
+      <p class="page-desc">二次元知识本地库。查「是什么」，与记忆系统（聊过什么）互不干扰。</p>
+      <div class="grid cols-3" id="stat-cards"></div>
+      <div class="card" style="margin-top:18px">
+        <h3 style="font-family:var(--font-kai);margin-bottom:10px">热门标签</h3>
+        <div class="result" style="border:none;background:transparent;padding:0" id="top-tags"></div>
+      </div>
+    </section>
+
+    <!-- 检索 -->
+    <section class="page" id="page-search" hidden>
+      <h1 class="page-title">检索</h1>
+      <p class="page-desc">输入梗、角色、作品名 —— 精确命中优先，秒出释义。</p>
+      <div class="search-bar">
+        <input id="q" placeholder="试着搜：钟离 / 典急笑 / 芙莉莲 / 老六…" autocomplete="off">
+        <button class="btn" id="go">查</button>
+      </div>
+      <div id="results"></div>
+    </section>
+
+    <!-- 数据源 -->
+    <section class="page" id="page-sources" hidden>
+      <h1 class="page-title">数据源</h1>
+      <p class="page-desc">开关各源、看来源分布。加新源 = 丢一个适配器进 core/sources/ 并在配置登记，无需改代码。</p>
+      <div id="src-list"></div>
+    </section>
+
+    <!-- 同步 -->
+    <section class="page" id="page-sync" hidden>
+      <h1 class="page-title">同步</h1>
+      <p class="page-desc">从外部数据源拉取最新知识写进本地库。单源失败不影响其它，且失败不清空旧库。</p>
+      <div class="search-bar">
+        <button class="btn" id="sync-all">🔄 同步全部</button>
+        <button class="btn ghost" id="sync-clear">清空日志</button>
+      </div>
+      <div class="card"><div id="sync-log"><div class="empty">点了「同步全部」后，这里显示逐源结果。</div></div></div>
+    </section>
+  </main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

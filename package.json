@@ -1,0 +1,21 @@
+{
+  "name": "canghai",
+  "version": "0.1.0",
+  "description": "藏海 · canghai —— 二次元知识图鉴引擎 + 控制面板。可接入 QQAgent / DSH 两个宿主，支持可插拔外部数据源，本地秒查、离线可用、定时保鲜。与记忆系统职责正交：藏海查「是什么」，记忆管「发生过什么」。",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "canghai": "./cli.js" },
+  "main": "./index.js",
+  "scripts": {
+    "sync": "node cli.js sync",
+    "search": "node cli.js search",
+    "stats": "node cli.js stats",
+    "serve": "node server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "keywords": ["knowledge-base", "anime", "games", "qqbot", "cordis", "qqagent", "dsh", "plugin", "dictionary"],
+  "author": "",
+  "repository": { "type": "git", "url": "" },
+  "dependencies": {}
+}

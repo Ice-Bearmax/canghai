@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "_说明": "数据源声明式配置。加/停用/改源只动这个文件 + 往 core/sources 丢适配器；sync.js 不认识具体源。enabled=false 即跳过。config 覆盖适配器 configSpec 的默认值。",
+  "sources": [
+    {
+      "id": "seed",
+      "adapter": "local-file",
+      "enabled": true,
+      "label": "人工种子库",
+      "target": "00-seed.json",
+      "config": { "dir": "seed", "targetFile": "00-seed.json" }
+    },
+    {
+      "id": "genshin",
+      "adapter": "genshin-db",
+      "enabled": true,
+      "target": "genshin-roster.json",
+      "config": { "maxCharacters": 0, "skipPlaceholder": true }
+    },
+    {
+      "id": "anime",
+      "adapter": "anime-data",
+      "enabled": true,
+      "target": "anime-season.json",
+      "config": { "years": 2, "includeUpcoming": true }
+    }
+  ]
+}
