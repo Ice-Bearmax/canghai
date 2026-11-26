@@ -42,6 +42,39 @@ async function main() {
     console.log(r.text);
     return;
   }
+  if (cmd === 'domains') {
+    // 按大类看覆盖均衡度：哪个领域最少，下次补哪个。
+    const entries = engine.store.loadAll();
+    const DOMAINS = {
+      '动漫': ['动漫', '新番', 'ACGN'],
+      '游戏': ['游戏', '原神', '星穹铁道', '崩坏3', '明日方舟', '战锤', '英雄联盟', '王者荣耀', 'CS:GO', '绝地求生', 'DOTA2', '塞尔达', '宝可梦', '黑神话', 'Minecraft', '艾尔登法环', '守望先锋', '尼尔'],
+      '影视': ['影视', '电影', '电视剧'],
+      '网络梗': ['梗', '网络用语', '谐音', '引用', '修辞', '俗语', '缩写', '现象']
+    };
+    const cnt = {};
+    for (const k of Object.keys(DOMAINS)) cnt[k] = 0;
+    cnt['其他'] = 0;
+    for (const e of entries) {
+      const tags = e.tags || [];
+      let hit = null;
+      for (const [k, keys] of Object.entries(DOMAINS)) {
+        if (tags.some((t) => keys.includes(t))) { hit = k; break; }
+      }
+      cnt[hit || '其他'] = (cnt[hit || '其他'] || 0) + 1;
+    }
+    const total = entries.length;
+    console.log(`藏海图鉴 · 共 ${total} 条，按领域：\n`);
+    const sorted = Object.entries(cnt).filter(([k]) => k !== '其他').sort((a, b) => b[1] - a[1]);
+    for (const [k, n] of sorted) {
+      const pct = total ? ((n / total) * 100).toFixed(1) : '0';
+      const bar = '█'.repeat(Math.round((n / Math.max(1, sorted[0][1])) * 20));
+      console.log(`  ${k.padEnd(6, '　')} ${String(n).padStart(5)} 条  ${pct.padStart(5)}%  ${bar}`);
+    }
+    if (cnt['其他']) console.log(`  ${'其他'.padEnd(6, '　')} ${String(cnt['其他']).padStart(5)} 条`);
+    const weakest = sorted.filter(([k]) => k !== '网络梗').sort((a, b) => a[1] - b[1])[0];
+    if (weakest) console.log(`\n最少的领域：${weakest[0]}（${weakest[1]} 条）—— 下次优先补它。`);
+    return;
+  }
   if (cmd === 'stats') {
     const s = engine.stats();
     console.log(`藏海图鉴 · 共 ${s.total} 条，来自 ${s.files} 个文件\n`);

@@ -51,8 +51,21 @@ export function createStore(dataDir) {
    * 加载全部条目：读所有文件 → schema 校验 → 按 title 去重（高优先级覆盖）。
    * 带内存缓存；任何写入后调 invalidate() 清缓存并重建索引版本号。
    */
+  /**
+   * 数据指纹：文件列表 + mtime + size。外部改了文件（如定时任务补条目）也能被发现。
+   * 代价是每次 loadAll 一次 readdir+stat（十几文件，可忽略）。
+   */
+  function signature() {
+    const parts = [];
+    for (const { file } of listSources()) {
+      try { const s = fs.statSync(file); parts.push(`${file}:${s.mtimeMs}:${s.size}`); } catch { /* 刚被删 */ }
+    }
+    return parts.join('|');
+  }
+
   function loadAll() {
-    if (cache) return cache.entries;
+    const sig = signature();
+    if (cache && cache.sig === sig) return cache.entries;
     ensureDir();
     const byTitle = new Map(); // normKey -> { entry, prio, source }
     const report = { files: 0, total: 0, rejected: 0, droppedDup: 0 };
@@ -86,7 +99,7 @@ export function createStore(dataDir) {
       }
     }
     const entries = [...byTitle.values()].map((v) => v.entry);
-    cache = { entries, index: null };
+    cache = { entries, index: null, sig };
     indexVersion++;
     loadAll._report = report;
     return entries;
