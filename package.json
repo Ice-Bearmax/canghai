@@ -5,7 +5,9 @@
   "type": "module",
   "license": "MIT",
   "main": "./adapters/dsh/index.js",
-  "bin": { "canghai": "./cli.js" },
+  "bin": {
+    "canghai": "./cli.js"
+  },
   "files": [
     "adapters",
     "core",
@@ -31,9 +33,24 @@
     "serve": "node server.js",
     "test": "node --test"
   },
-  "engines": { "node": ">=22" },
-  "keywords": ["knowledge-base", "anime", "games", "qqbot", "cordis", "qqagent", "dsh", "dsh-plugin", "dictionary"],
-  "author": "",
-  "repository": { "type": "git", "url": "" },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "knowledge-base",
+    "anime",
+    "games",
+    "qqbot",
+    "cordis",
+    "qqagent",
+    "dsh",
+    "dsh-plugin",
+    "dictionary"
+  ],
+  "author": "Ice-Bearmax",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ice-Bearmax/canghai.git"
+  },
   "dependencies": {}
 }

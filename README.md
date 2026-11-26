@@ -104,9 +104,9 @@ node server.js            # 起控制面板 → http://127.0.0.1:8792
 
 ```bash
 # 桌面版
-dsh plugin --profile desktop add github:<owner>/canghai
+dsh plugin --profile desktop add github:Ice-Bearmax/canghai
 # Web 版
-dsh plugin --profile web add github:<owner>/canghai
+dsh plugin --profile web add github:Ice-Bearmax/canghai
 ```
 
 装完重启 DSH。插件会自动：
