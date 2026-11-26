@@ -5,7 +5,8 @@
     {
       "id": "seed",
       "adapter": "local-file",
-      "enabled": true,
+      "enabled": false,
+      "_说明": "data/seed/ 已被 store 直接读取（优先级最高），无需再同步一份到 kb。保留此条仅作 local-file 适配器示例。",
       "label": "人工种子库",
       "target": "00-seed.json",
       "config": { "dir": "seed", "targetFile": "00-seed.json" }

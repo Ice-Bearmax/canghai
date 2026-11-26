@@ -20,7 +20,8 @@ const PRIORITY = {
 };
 
 export function createStore(dataDir) {
-  const KB = path.join(dataDir, 'kb');
+  const KB = path.join(dataDir, 'kb');       // 同步产物（低优先级）
+  const SEED = path.join(dataDir, 'seed');   // 人工精选（高优先级，随包发布）
   let cache = null;      // { entries, index }
   let indexVersion = 0;  // 数据变了就 ++，让 search 的缓存索引失效重建
 
@@ -32,11 +33,15 @@ export function createStore(dataDir) {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
   }
 
-  /** 列出所有 kb 文件（按文件名排序，稳定）。 */
-  function listFiles() {
-    try {
-      return fs.readdirSync(KB).filter((n) => n.endsWith('.json')).sort();
-    } catch { return []; }
+  /** 列出 seed/ 与 kb/ 下的所有 json（seed 在前 = 优先级高）。 */
+  function listSources() {
+    const out = [];
+    for (const [dir, kind] of [[SEED, 'seed'], [KB, 'kb']]) {
+      let names = [];
+      try { names = fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort(); } catch { continue; }
+      for (const name of names) out.push({ file: path.join(dir, name), name, kind });
+    }
+    return out;
   }
 
   /**
@@ -49,14 +54,14 @@ export function createStore(dataDir) {
     const byTitle = new Map(); // normKey -> { entry, prio, source }
     const report = { files: 0, total: 0, rejected: 0, droppedDup: 0 };
 
-    for (const name of listFiles()) {
-      const raw = readJson(path.join(KB, name));
+    for (const { file, name, kind } of listSources()) {
+      const raw = readJson(file);
       if (!raw) continue;
       report.files++;
       // 允许 { entries: [] } 或 [] 两种；_generated:true 视为同步产物（低优先级）
       const list = Array.isArray(raw) ? raw : (raw.entries || []);
-      const isGen = raw._generated === true || /-roster|-season|generated/.test(name);
-      const prio = isGen ? PRIORITY.generated : (raw._manual ? PRIORITY.manual : PRIORITY.default);
+      const isGen = kind === 'kb' || raw._generated === true || /-roster|-season|generated/.test(name);
+      const prio = isGen ? PRIORITY.generated : PRIORITY.manual; // seed/ 目录 = 人工精选，最高优先
       const { entries, rejected } = validateMany(list, raw._source || name.replace('.json', ''));
       report.total += entries.length;
       report.rejected += rejected.length;
@@ -124,14 +129,14 @@ export function createStore(dataDir) {
     }
     return {
       total: entries.length,
-      files: listFiles().length,
+      files: listSources().length,
       bySource,
       topTags: Object.entries(byTag).sort((a, b) => b[1] - a[1]).slice(0, 20),
       loadReport: loadAll._report || null
     };
   }
 
-  return { KB, listFiles, loadAll, query, invalidate, writeFile, stats, formatEntry };
+  return { KB, SEED, listSources, loadAll, query, invalidate, writeFile, stats, formatEntry };
 }
 
 function normKey(s) {
