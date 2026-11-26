@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateMany } from './schema.js';
 import { search as searchEntries, buildSearchIndex, formatEntry } from './search.js';
+import { domainOf, domainStats, weakestDomain, DOMAINS } from './domains.js';
 
 // 来源优先级：数字大的覆盖小的。自学习 > 人工精选 > 自动同步。
 const PRIORITY = {
@@ -51,6 +52,15 @@ export function createStore(dataDir) {
    * 加载全部条目：读所有文件 → schema 校验 → 按 title 去重（高优先级覆盖）。
    * 带内存缓存；任何写入后调 invalidate() 清缓存并重建索引版本号。
    */
+  /** 最近一次数据更新时间（面板显示「数据新鲜度」）。 */
+  function newestMtime() {
+    let max = 0;
+    for (const { file } of listSources()) {
+      try { const s = fs.statSync(file); if (s.mtimeMs > max) max = s.mtimeMs; } catch { /* 忽略 */ }
+    }
+    return max ? new Date(max).toISOString() : null;
+  }
+
   /**
    * 数据指纹：文件列表 + mtime + size。外部改了文件（如定时任务补条目）也能被发现。
    * 代价是每次 loadAll 一次 readdir+stat（十几文件，可忽略）。
@@ -210,6 +220,48 @@ export function createStore(dataDir) {
     return { total: all.length, items: all.slice(0, Math.max(5, Math.min(limit, 80))) };
   }
 
+  /** 分页浏览：按领域/来源/关键词筛选。面板「条目管理」用。 */
+  function listEntries({ page = 1, size = 20, domain = '', source = '', q = '' } = {}) {
+    let all = loadAll();
+    const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, '');
+    const nq = norm(q);
+    if (nq) all = all.filter((e) => norm(e.title).includes(nq) || (e.aliases || []).some((a) => norm(a).includes(nq)));
+    if (domain) all = all.filter((e) => domainOf(e) === domain);
+    if (source) all = all.filter((e) => (e._source || '') === source);
+    const total = all.length;
+    const pages = Math.max(1, Math.ceil(total / size));
+    const p = Math.min(Math.max(1, Number(page) || 1), pages);
+    const items = all.slice((p - 1) * size, p * size).map((e) => ({
+      ...e,
+      _domain: domainOf(e),
+      _editable: (e._source || '') === 'user-added' || e.freshness === '自学习'
+    }));
+    return { total, page: p, pages, size, items };
+  }
+
+  /** 删除自学习条目。人工精选(seed)与同步产物(kb)不可删——只删 user 层。 */
+  function deleteUserEntry(title) {
+    const cur = readJson(USER_FILE, { entries: [] });
+    const list = Array.isArray(cur) ? cur : (cur.entries || []);
+    const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, '');
+    const t = norm(title);
+    const next = list.filter((e) => norm(e.title) !== t && !(e.aliases || []).some((a) => norm(a) === t));
+    if (next.length === list.length) return { ok: false, error: '不在自学习库（人工精选/同步条目不可删）' };
+    try {
+      fs.mkdirSync(USER, { recursive: true });
+      fs.writeFileSync(USER_FILE, JSON.stringify({ entries: next }, null, 2), 'utf8');
+      invalidate();
+    } catch (e) { return { ok: false, error: `写入失败：${e.message}` }; }
+    return { ok: true, removed: list.length - next.length, count: next.length };
+  }
+
+  /** 来源清单（面板筛选下拉用）。 */
+  function sourcesList() {
+    const cnt = {};
+    for (const e of loadAll()) cnt[e._source || '?'] = (cnt[e._source || '?'] || 0) + 1;
+    return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ id, count: n }));
+  }
+
   /** 统计：给面板概览与 CLI stats 用。 */
   function stats() {
     const entries = loadAll();
@@ -224,11 +276,19 @@ export function createStore(dataDir) {
       files: listSources().length,
       bySource,
       topTags: Object.entries(byTag).sort((a, b) => b[1] - a[1]).slice(0, 20),
+      domains: domainStats(entries),
+      domainList: DOMAINS,
+      weakest: weakestDomain(entries),
+      userCount: entries.filter((e) => (e._source || '') === 'user-added' || e.freshness === '自学习').length,
+      updatedAt: newestMtime(),
       loadReport: loadAll._report || null
     };
   }
 
-  return { KB, SEED, USER, USER_FILE, listSources, loadAll, query, invalidate, writeFile, stats, formatEntry, rememberEntry, indexEntries };
+  return {
+    KB, SEED, USER, USER_FILE, listSources, loadAll, query, invalidate, writeFile, stats, formatEntry,
+    rememberEntry, indexEntries, listEntries, deleteUserEntry, sourcesList, newestMtime
+  };
 }
 
 function normKey(s) {

@@ -18,10 +18,12 @@
     </div>
     <button class="nav-btn active" data-page="overview"><span class="ico">🌊</span>概览</button>
     <button class="nav-btn" data-page="search"><span class="ico">🔍</span>检索</button>
+    <button class="nav-btn" data-page="entries"><span class="ico">📇</span>条目管理</button>
     <button class="nav-btn" data-page="sources"><span class="ico">📚</span>数据源</button>
     <button class="nav-btn" data-page="sync"><span class="ico">🔄</span>同步</button>
+    <button class="nav-btn" data-page="about"><span class="ico">⚙️</span>关于/设置</button>
     <div style="margin-top:auto;color:var(--ink-faint);font-size:11px;padding:6px">
-      藏海 · v0.1<br>本地秒查 · 离线可用
+      藏海 · v0.1 · 本地秒查<br><span id="foot-count">…</span>
     </div>
   </aside>
 
@@ -30,10 +32,14 @@
     <section class="page" id="page-overview">
       <h1 class="page-title">藏海 · 知识图鉴</h1>
       <p class="page-desc">二次元知识本地库。查「是什么」，与记忆系统（聊过什么）互不干扰。</p>
-      <div class="grid cols-3" id="stat-cards"></div>
+      <div class="grid cols-4" id="stat-cards"></div>
       <div class="card" style="margin-top:18px">
-        <h3 style="font-family:var(--font-kai);margin-bottom:10px">热门标签</h3>
-        <div class="result" style="border:none;background:transparent;padding:0" id="top-tags"></div>
+        <div class="card-head"><h3>领域覆盖</h3><span class="hint" id="weakest-hint"></span></div>
+        <div id="domain-chart"></div>
+      </div>
+      <div class="grid cols-2" style="margin-top:18px">
+        <div class="card"><div class="card-head"><h3>来源分布</h3></div><div id="source-list"></div></div>
+        <div class="card"><div class="card-head"><h3>热门标签</h3></div><div id="top-tags"></div></div>
       </div>
     </section>
 
@@ -43,30 +49,97 @@
       <p class="page-desc">输入梗、角色、作品名 —— 精确命中优先，秒出释义。</p>
       <div class="search-bar">
         <input id="q" placeholder="试着搜：钟离 / 典急笑 / 芙莉莲 / 老六…" autocomplete="off">
+        <select id="q-domain"><option value="">全部领域</option></select>
+        <select id="q-limit">
+          <option value="5">5 条</option><option value="10" selected>10 条</option><option value="20">20 条</option>
+        </select>
         <button class="btn" id="go">查</button>
       </div>
       <div id="results"></div>
     </section>
 
+    <!-- 条目管理 -->
+    <section class="page" id="page-entries" hidden>
+      <h1 class="page-title">条目管理</h1>
+      <p class="page-desc">浏览、搜索、新增、删除。人工精选与同步条目只读；自学习条目可删改。</p>
+      <div class="search-bar">
+        <input id="e-q" placeholder="按标题/别名搜…" autocomplete="off">
+        <select id="e-domain"><option value="">全部领域</option></select>
+        <select id="e-source"><option value="">全部来源</option></select>
+        <select id="e-size"><option value="20" selected>20/页</option><option value="50">50/页</option><option value="100">100/页</option></select>
+        <button class="btn" id="e-refresh">筛选</button>
+        <button class="btn ghost" id="e-new">+ 新增</button>
+      </div>
+      <div id="e-list"></div>
+      <div class="pager" id="e-pager"></div>
+    </section>
+
     <!-- 数据源 -->
     <section class="page" id="page-sources" hidden>
       <h1 class="page-title">数据源</h1>
-      <p class="page-desc">开关各源、看来源分布。加新源 = 丢一个适配器进 core/sources/ 并在配置登记，无需改代码。</p>
+      <p class="page-desc">开关写进 sources.local.json（本地覆盖，不动仓库主配置）。加新源 = 丢一个适配器进 core/sources/ 再登记。</p>
       <div id="src-list"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-head"><h3>如何新增数据源</h3></div>
+        <ol class="steps">
+          <li>在 <code>core/sources/</code> 新建 <code>my-source.js</code>，实现 <code>id / label / configSpec / fetch(ctx) / normalize(raw)</code></li>
+          <li>在 <code>sources.config.json</code> 的 <code>sources[]</code> 里加一项 <code>{ "id":"my", "adapter":"my-source", "enabled":true }</code></li>
+          <li>跑 <code>node cli.js sync --only=my</code> 验证</li>
+        </ol>
+        <p class="hint">核心逻辑不认具体数据源，只认接口——所以新增/切换源不需要改任何代码。</p>
+      </div>
     </section>
 
     <!-- 同步 -->
     <section class="page" id="page-sync" hidden>
       <h1 class="page-title">同步</h1>
-      <p class="page-desc">从外部数据源拉取最新知识写进本地库。单源失败不影响其它，且失败不清空旧库。</p>
+      <p class="page-desc">从外部数据源拉取最新知识。单源失败不影响其它，且失败不清空旧库。</p>
       <div class="search-bar">
         <button class="btn" id="sync-all">🔄 同步全部</button>
         <button class="btn ghost" id="sync-clear">清空日志</button>
       </div>
-      <div class="card"><div id="sync-log"><div class="empty">点了「同步全部」后，这里显示逐源结果。</div></div></div>
+      <div class="card"><div id="sync-log"><div class="empty">点「同步全部」后，这里显示逐源结果。</div></div></div>
+    </section>
+
+    <!-- 关于 -->
+    <section class="page" id="page-about" hidden>
+      <h1 class="page-title">关于 / 设置</h1>
+      <p class="page-desc">运行时信息与接口说明。可调项在宿主的技能设置里。</p>
+      <div class="grid cols-2">
+        <div class="card"><div class="card-head"><h3>运行时</h3></div><div id="about-runtime"></div></div>
+        <div class="card"><div class="card-head"><h3>数据格式约定</h3></div><div id="about-schema"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-head"><h3>本地 API</h3></div>
+        <div id="about-api"></div>
+      </div>
     </section>
   </main>
 </div>
+
+<!-- 条目编辑弹窗 -->
+<div class="modal-mask" id="modal" hidden>
+  <div class="modal">
+    <div class="card-head"><h3 id="m-title">新增条目</h3><button class="x" id="m-close">✕</button></div>
+    <div class="form">
+      <label>标题 <span class="req">*</span><input id="m-t" placeholder="梗名/角色名/作品名"></label>
+      <label>别名（逗号分隔）<input id="m-a" placeholder="yyds,永远的神"></label>
+      <label>意思 <span class="req">*</span><textarea id="m-m" rows="3" placeholder="一句话说清它是什么"></textarea></label>
+      <label>怎么用 / 例句<textarea id="m-u" rows="2" placeholder="例：……"></textarea></label>
+      <div class="row2">
+        <label>出处<input id="m-e" placeholder="作品/游戏/哪阵子火的"></label>
+        <label>语气<input id="m-tone" placeholder="吐槽/温馨/中二"></label>
+      </div>
+      <label>标签（逗号分隔）<input id="m-tags" placeholder="影视,电影"></label>
+      <div class="modal-acts">
+        <button class="btn" id="m-save">保存</button>
+        <button class="btn ghost" id="m-cancel">取消</button>
+      </div>
+      <p class="hint">保存写入自学习库（data/user），同名会更新而不是重复收录。</p>
+    </div>
+  </div>
+</div>
+
 <script src="/app.js"></script>
 </body>
 </html>

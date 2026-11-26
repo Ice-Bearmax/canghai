@@ -157,3 +157,81 @@ body::before {
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(127,227,212,.5);} 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 
 @media (max-width: 760px) { .app { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; flex-direction: row; overflow-x: auto; } .grid.cols-3 { grid-template-columns: 1fr; } }
+
+/* ── 扩展：栅格 ── */
+.grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px) { .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } .grid.cols-2 { grid-template-columns: 1fr; } }
+
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-head h3 { font-family: var(--font-kai); font-size: 17px; letter-spacing: 1px; }
+.card-head .hint, .hint { color: var(--ink-faint); font-size: 12px; }
+.card-head .hint { margin-left: auto; }
+
+/* ── 领域条形图 ── */
+.dom-row { display: grid; grid-template-columns: 64px 1fr 90px; align-items: center; gap: 12px; margin: 9px 0; }
+.dom-name { color: var(--ink-dim); font-size: 13.5px; }
+.dom-track { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.dom-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--whale), var(--glow)); transition: width .6s var(--ease); }
+.dom-fill.weak { background: linear-gradient(90deg, var(--coral), #ffb08f); }
+.dom-num { text-align: right; font-size: 12.5px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+/* ── 下拉框 ── */
+select {
+  padding: 11px 14px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--bg-deep); color: var(--foam); font-family: var(--font); font-size: 14px;
+  cursor: pointer; transition: border-color var(--dur) var(--ease);
+}
+select:focus { outline: none; border-color: var(--whale); }
+
+/* ── 表格 ── */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tbl th {
+  text-align: left; padding: 9px 10px; color: var(--ink-faint); font-weight: 500;
+  font-size: 12px; border-bottom: 1px solid var(--line); letter-spacing: .5px;
+}
+.tbl td { padding: 10px; border-bottom: 1px dashed var(--line); color: var(--ink-dim); vertical-align: top; }
+.tbl tr:hover td { background: rgba(78,168,222,.06); }
+.tbl .t-title { color: var(--foam); font-weight: 600; }
+.tbl .t-mean { color: var(--ink-faint); font-size: 12.5px; }
+.tbl .acts { white-space: nowrap; text-align: right; }
+.mini-btn {
+  border: 1px solid var(--line); background: transparent; color: var(--ink-dim);
+  border-radius: 8px; padding: 3px 9px; font-size: 12px; cursor: pointer; font-family: var(--font);
+  transition: all var(--dur) var(--ease);
+}
+.mini-btn:hover { border-color: var(--whale); color: var(--foam); }
+.mini-btn.danger:hover { border-color: var(--coral); color: var(--coral); }
+.lock { color: var(--ink-faint); font-size: 11.5px; }
+
+/* ── 分页 ── */
+.pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; color: var(--ink-dim); font-size: 13px; }
+.pager button { min-width: 34px; }
+
+/* ── 弹窗 ── */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(4,14,24,.72); backdrop-filter: blur(3px);
+  display: grid; place-items: center; z-index: 50; animation: fade .2s var(--ease);
+}
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+.modal {
+  width: min(560px, 92vw); max-height: 86vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 20px 22px; box-shadow: 0 24px 60px rgba(0,0,0,.5); animation: rise .28s var(--ease);
+}
+.modal .x { margin-left: auto; background: transparent; border: none; color: var(--ink-faint); font-size: 16px; cursor: pointer; }
+.form label { display: block; margin-bottom: 12px; color: var(--ink-dim); font-size: 13px; }
+.form input, .form textarea {
+  width: 100%; margin-top: 5px; padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--bg-deep); color: var(--foam);
+  font-family: var(--font); font-size: 14px; resize: vertical;
+}
+.form input:focus, .form textarea:focus { outline: none; border-color: var(--whale); }
+.form .req { color: var(--coral); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-acts { display: flex; gap: 10px; margin-top: 6px; }
+
+/* ── 步骤 ── */
+.steps { margin: 8px 0 10px 20px; color: var(--ink-dim); font-size: 13.5px; line-height: 2; }
+.steps code { background: var(--surface-2); color: var(--glow); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+code { background: var(--surface-2); color: var(--glow); padding: 1px 5px; border-radius: 4px; }
