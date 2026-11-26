@@ -75,7 +75,7 @@ export async function runSync(deps, opts = {}) {
       }
 
       const fileName = src.target || adapter.targetFile || `${src.id}.json`;
-      store.writeFile(fileName, {
+      const w = store.writeFile(fileName, {
         _source: src.id,
         _adapter: src.adapter,
         _generated: true,
@@ -84,6 +84,8 @@ export async function runSync(deps, opts = {}) {
       });
       rec.ok = true;
       rec.count = entries.length;
+      rec.changed = !w.skipped;
+      if (w.skipped) rec.note = '无变化（内容与上次一致，未写盘）';
       report.total += entries.length;
       if (rejected.length) rec.note = `${rejected.length} 条不合格式已跳过`;
     } catch (e) {

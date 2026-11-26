@@ -67,3 +67,26 @@ test('errors：失败保留旧库，确认真空才允许清空', () => {
   assert.equal(shouldKeepOld(netErr, 0), false);          // 失败 → 不采用新（即保留旧）
   assert.equal(shouldKeepOld(null, 10), false);           // 成功 → 采用新
 });
+test('kb-store：内容没变则不落盘（幂等，防定时任务刷 diff）', async () => {
+  const { createStore } = await import('../core/kb-store.js');
+  const os = await import('node:os');
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'canghai-'));
+  const store = createStore(dir);
+  const entries = [{ title: '测试条目', meaning: '内容' }];
+
+  const r1 = store.writeFile('t.json', { entries, _syncedAt: '2026-01-01' });
+  assert.equal(r1.skipped, false);
+  assert.equal(r1.changed, 1);
+
+  // 只有时间戳变、内容没变 → 跳过
+  const r2 = store.writeFile('t.json', { entries, _syncedAt: '2026-02-02' });
+  assert.equal(r2.skipped, true);
+
+  // 内容变了 → 落盘
+  const r3 = store.writeFile('t.json', { entries: [{ title: '测试条目', meaning: '改了' }] });
+  assert.equal(r3.skipped, false);
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});

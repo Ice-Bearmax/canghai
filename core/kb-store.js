@@ -105,17 +105,31 @@ export function createStore(dataDir) {
    * @param {string} fileName 如 'genshin-roster.json'
    * @param {object} payload { entries, _source, _syncedAt, ... }
    */
+  /**
+   * 原子写。**幂等**：条目内容没变就不落盘（只更新 _syncedAt 不算变化），
+   * 否则定时任务每次跑都会产生一行时间戳 diff，自动提交变成垃圾噪音。
+   * @returns {{file:string, skipped:boolean, changed:number}}
+   */
   function writeFile(fileName, payload) {
     ensureDir();
     if (!/^[A-Za-z0-9_.\-]+\.json$/.test(fileName)) {
       throw new Error(`非法文件名（防路径穿越）：${fileName}`);
     }
     const file = path.join(KB, fileName);
+
+    // 内容比对：只看 entries，忽略 _syncedAt / _generated 这类元数据。
+    const prev = readJson(file);
+    const prevEntries = prev && (Array.isArray(prev) ? prev : prev.entries) || [];
+    const nextEntries = payload.entries || [];
+    if (JSON.stringify(prevEntries) === JSON.stringify(nextEntries)) {
+      return { file, skipped: true, changed: 0 };
+    }
+
     const tmp = file + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf8');
     fs.renameSync(tmp, file); // 同盘 rename 是原子的
     invalidate();
-    return file;
+    return { file, skipped: false, changed: nextEntries.length };
   }
 
   /** 统计：给面板概览与 CLI stats 用。 */

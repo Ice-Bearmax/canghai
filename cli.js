@@ -26,10 +26,13 @@ async function main() {
     const rep = await engine.sync({ only });
     console.log('\n同步报告：');
     for (const s of rep.sources) {
-      const mark = s.ok ? '✅' : s.skipped ? '⏭️' : '⚠️';
+      const unchanged = s.changed === false;
+      const mark = s.ok ? (unchanged ? '⏭️' : '✅') : s.skipped ? '⏭️' : '⚠️';
       console.log(`  ${mark} ${s.label}: ${s.ok ? s.count + ' 条' : (s.error || s.reason || '跳过')}${s.note ? '（' + s.note + '）' : ''}`);
     }
     console.log(`\n合计入库 ${rep.total} 条，库内现有 ${engine.stats().total} 条。`);
+    const changed = rep.sources.filter((s) => s.changed);
+    console.log(changed.length ? `实际更新 ${changed.length} 个源：${changed.map((s) => s.label).join('、')}` : '本次无内容变化（无需提交）。');
     return;
   }
   if (cmd === 'search' || cmd === 'lookup') {
